@@ -23,7 +23,7 @@ func (self Bar) Hello() string {
 	return "World!"
 }
 
-func Test(t *testing.T) {
+func TestComposition(t *testing.T) {
 	foo := Foo{}
 	assert.Equal(t, "Pong", foo.Ping())
 	assert.Equal(t, "World", foo.Hello())
