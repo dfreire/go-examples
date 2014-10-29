@@ -3,26 +3,18 @@ package structs_test
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
-	// "github.com/fatih/structs"
-	// "github.com/markbates/going/nulls"
-	// "github.com/mitchellh/mapstructure"
+	"github.com/fatih/structs"
+	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
 )
 
-type Author struct {
-	Name        string                   `json:"name"`
-	Nationality string                   `json:"nationality"`
-	Books       []map[string]interface{} `json:"books"`
-	// Books       []Book `json:"books"`
-}
-
 type Book struct {
-	Title string `json:"title"`
-	Year  int    `json:"year"`
+	Title  string
+	Author string
+	Year   int
 }
 
 const jsonData string = `{
@@ -46,32 +38,43 @@ const jsonData string = `{
 func Test(t *testing.T) {
 	assert.Nil(t, nil)
 
-	author := Author{}
-	assert.Nil(t, json.NewDecoder(strings.NewReader(jsonData)).Decode(&author))
-	json.NewEncoder(os.Stdout).Encode(author)
+	book := Book{"El mal de Montano", "E. Vila-Matas", 2002}
+	assert.Equal(t, "E. Vila-Matas", book.Author)
 
-	for _, bookMap := range author.Books {
-		fmt.Println("---")
-		//json.NewEncoder(os.Stdout).Encode(bookMap)
-		fmt.Println(bookMap)
-		//json.NewEncoder(os.Stdout).Encode(getValidMap(Book{}, bookMap))
-		fmt.Println(getValidMap(Book{}, bookMap))
-	}
+	bookUpdated1 := Book{}
+	getUpdatedBook(book, &bookUpdated1, `{"author": "Enrique Vila-Matas"}`)
+	assert.Equal(t, "Enrique Vila-Matas", bookUpdated1.Author)
+
+	bookUpdated2 := Book{}
+	getUpdatedBook(bookUpdated1, &bookUpdated2, `{"publisher": "Anagrama"}`)
+	assert.Equal(t, bookUpdated2, bookUpdated1)
+
+	bookUpdated3 := Book{}
+	getUpdatedBook(bookUpdated1, &bookUpdated3, `{"year": null}`)
+	assert.Equal(t, bookUpdated3.Title, bookUpdated1.Title)
+	assert.Equal(t, bookUpdated3.Author, bookUpdated1.Author)
+	assert.Equal(t, bookUpdated3.Year, 0)
 }
 
-func getValidMap(v interface{}, in map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{})
-	t := reflect.TypeOf(v)
-	tags := []string{}
-	for i := 0; i < t.NumField(); i++ {
-		tags = append(tags, strings.Split(t.Field(i).Tag.Get("json"), ",")[0])
+func getUpdatedBook(orig Book, dest *Book, changeJson string) {
+	origMap := structs.Map(orig)
+	fmt.Println("---")
+	json.NewEncoder(os.Stdout).Encode(origMap)
+
+	var changeMap map[string]interface{}
+	json.Unmarshal([]byte(changeJson), &changeMap)
+	json.NewEncoder(os.Stdout).Encode(changeMap)
+
+	destMap := make(map[string]interface{})
+	for key, value := range origMap {
+		key := strings.ToLower(key)
+		destMap[key] = value
 	}
-	for key, value := range in {
-		for _, tag := range tags {
-			if strings.Contains(tag, key) {
-				out[key] = value
-			}
-		}
+	for key, value := range changeMap {
+		key := strings.ToLower(key)
+		destMap[key] = value
 	}
-	return out
+
+	mapstructure.Decode(destMap, dest)
+	json.NewEncoder(os.Stdout).Encode(dest)
 }
