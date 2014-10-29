@@ -2,11 +2,11 @@ package structs_test
 
 import (
 	"encoding/json"
-	// "fmt"
-	"github.com/fatih/structs"
-	// "reflect"
+	"fmt"
+	"reflect"
+	// "github.com/fatih/structs"
 	// "github.com/markbates/going/nulls"
-	"github.com/mitchellh/mapstructure"
+	// "github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
@@ -17,12 +17,12 @@ type Author struct {
 	Name        string                   `json:"name"`
 	Nationality string                   `json:"nationality"`
 	Books       []map[string]interface{} `json:"books"`
-	//Books       []Book `json:"books"`
+	// Books       []Book `json:"books"`
 }
 
 type Book struct {
-	Title string `json:"title" structs:"title"`
-	Year  int    `json structs:"year"`
+	Title string `json:"title"`
+	Year  int    `json:"year"`
 }
 
 const jsonData string = `{
@@ -37,6 +37,9 @@ const jsonData string = `{
 		"title": "Doctor Pasavento",
 		"year": 2005,
 		"publisher": "Anagrama"
+	}, {
+		"title": "Dublinesca",
+		"year": null
 	}]
 }`
 
@@ -48,15 +51,27 @@ func Test(t *testing.T) {
 	json.NewEncoder(os.Stdout).Encode(author)
 
 	for _, bookMap := range author.Books {
-		book := Book{}
-		assert.Nil(t, mapstructure.Decode(bookMap, &book))
-		if bookMap["year"] == nil {
-			assert.Equal(t, 0, book.Year)
-		} else {
-			assert.Equal(t, bookMap["year"], book.Year)
-		}
-		// json.NewEncoder(os.Stdout).Encode(bookMap)
-		json.NewEncoder(os.Stdout).Encode(structs.Map(book))
-		//fmt.Println(reflect.TypeOf(&book).Elem().Field(0).Tag.Get("json"))
+		fmt.Println("---")
+		//json.NewEncoder(os.Stdout).Encode(bookMap)
+		fmt.Println(bookMap)
+		//json.NewEncoder(os.Stdout).Encode(getValidMap(Book{}, bookMap))
+		fmt.Println(getValidMap(Book{}, bookMap))
 	}
+}
+
+func getValidMap(v interface{}, in map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{})
+	t := reflect.TypeOf(v)
+	tags := []string{}
+	for i := 0; i < t.NumField(); i++ {
+		tags = append(tags, strings.Split(t.Field(i).Tag.Get("json"), ",")[0])
+	}
+	for key, value := range in {
+		for _, tag := range tags {
+			if strings.Contains(tag, key) {
+				out[key] = value
+			}
+		}
+	}
+	return out
 }
