@@ -42,21 +42,27 @@ func Test(t *testing.T) {
 	assert.Equal(t, "E. Vila-Matas", book.Author)
 
 	bookUpdated1 := Book{}
-	getUpdatedBook(book, &bookUpdated1, `{"author": "Enrique Vila-Matas"}`)
+	getUpdatedStruct(book, &bookUpdated1, `{"author": "Enrique Vila-Matas"}`)
 	assert.Equal(t, "Enrique Vila-Matas", bookUpdated1.Author)
 
 	bookUpdated2 := Book{}
-	getUpdatedBook(bookUpdated1, &bookUpdated2, `{"publisher": "Anagrama"}`)
+	getUpdatedStruct(bookUpdated1, &bookUpdated2, `{"publisher": "Anagrama"}`)
 	assert.Equal(t, bookUpdated2, bookUpdated1)
 
 	bookUpdated3 := Book{}
-	getUpdatedBook(bookUpdated1, &bookUpdated3, `{"year": null}`)
+	getUpdatedStruct(bookUpdated1, &bookUpdated3, `{"year": null}`)
 	assert.Equal(t, bookUpdated3.Title, bookUpdated1.Title)
 	assert.Equal(t, bookUpdated3.Author, bookUpdated1.Author)
 	assert.Equal(t, bookUpdated3.Year, 0)
+
+	bookUpdated4 := Book{}
+	getUpdatedStruct(bookUpdated1, &bookUpdated4, `{"title": null}`)
+	assert.Equal(t, bookUpdated4.Title, "")
+	assert.Equal(t, bookUpdated4.Author, bookUpdated1.Author)
+	assert.Equal(t, bookUpdated4.Year, bookUpdated1.Year)
 }
 
-func getUpdatedBook(orig Book, dest *Book, changeJson string) {
+func getUpdatedStruct(orig interface{}, dest interface{}, changeJson string) {
 	origMap := structs.Map(orig)
 	fmt.Println("---")
 	json.NewEncoder(os.Stdout).Encode(origMap)
