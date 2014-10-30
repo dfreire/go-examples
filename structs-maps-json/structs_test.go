@@ -17,24 +17,6 @@ type Book struct {
 	Year   int
 }
 
-const jsonData string = `{
-	"name": "Enrique Vila-Matas",
-	"nationality": "Spain",
-	"books": [{
-		"title": "El mal de Montano",
-		"year": 2002
-	}, {
-		"title": "Paris no se acaba nunca"
-	}, {
-		"title": "Doctor Pasavento",
-		"year": 2005,
-		"publisher": "Anagrama"
-	}, {
-		"title": "Dublinesca",
-		"year": null
-	}]
-}`
-
 func Test(t *testing.T) {
 	assert.Nil(t, nil)
 
